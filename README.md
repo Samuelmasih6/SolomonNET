@@ -1,0 +1,1 @@
+# Solomon-s-wisdom-1.0
