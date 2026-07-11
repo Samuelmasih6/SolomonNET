@@ -5,6 +5,19 @@ import (
 	"net"
 )
 
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	buffer := make([]byte, 1024)
+
+	n, err := conn.Read(buffer)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("Received:", string(buffer[:n]))
+}
+
 func main() {
 
 	listener, err := net.Listen("tcp", ":8080")
@@ -14,18 +27,12 @@ func main() {
 
 	fmt.Println("King Solomon is listening...")
 
-	fmt.Println("Waiting for Queen...")
-	conn, err := listener.Accept()
-	fmt.Println("Queen Connected!")
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
 
-	fmt.Println("A queen has arrived!")
-
-	buffer := make([]byte, 1024)
-
-	n, err := conn.Read(buffer)
-	if err != nil {
-		panic(err)
+		go handleConnection(conn)
 	}
-
-	fmt.Println("Message:", string(buffer[:n]))
 }
