@@ -30,11 +30,11 @@ func handleConnection(conn net.Conn) {
 
 		if line == "END" {
 			challenge := parseChallenge(message.String())
-			answer := solveRiddle(challenge.Question)
 
 			fmt.Println("Type:", challenge.Type)
 			fmt.Println("Question:", challenge.Question)
 
+			answer := solveRiddle(challenge.Question)
 			response := fmt.Sprintf("TYPE:ANSWER\nANSWER:%s\nEND\n", answer)
 			_, err := conn.Write([]byte(response))
 			if err != nil {

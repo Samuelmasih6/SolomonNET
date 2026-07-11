@@ -1,29 +1,47 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
-
 	conn, err := net.Dial("tcp", "localhost:8080")
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 
 	message := `TYPE:RIDDLE
-QUESTION:What has hands but can't clap?
+QUESTION:What has keys but can't open locks?
 END
 `
 
-	conn.Write([]byte(message))
-	buffer := make([]byte, 1024)
-
-	n, err := conn.Read(buffer)
+	_, err = conn.Write([]byte(message))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(string(buffer[:n]))
+	reader := bufio.NewReader(conn)
+
+	var response strings.Builder
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+
+		line = strings.TrimSpace(line)
+
+		if line == "END" {
+			fmt.Println(response.String())
+			break
+		}
+
+		response.WriteString(line)
+		response.WriteString("\n")
+	}
 }
