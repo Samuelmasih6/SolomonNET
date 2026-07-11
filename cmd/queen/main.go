@@ -11,5 +11,9 @@ func main() {
 		panic(err)
 	}
 
-	conn.Write([]byte("Greetings King Solomon"))
+	message := `TYPE:RIDDLE
+QUESTION:What has keys but can't open locks?
+END`
+
+	conn.Write([]byte(message))
 }

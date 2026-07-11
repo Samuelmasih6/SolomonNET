@@ -3,7 +3,13 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
+
+type Challenge struct {
+	Type     string
+	Question string
+}
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
@@ -15,7 +21,37 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	fmt.Println("Received:", string(buffer[:n]))
+	//fmt.Println("Received:", string(buffer[:n]))
+	message := string(buffer[:n])
+
+	challenge := parseChallenge(message)
+
+	fmt.Println("Type:", challenge.Type)
+	fmt.Println("Question:", challenge.Question)
+}
+
+func parseChallenge(message string) Challenge {
+	var msgType string
+	var question string
+
+	lines := strings.Split(message, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "TYPE:") {
+			msgType = strings.TrimPrefix(line, "TYPE:")
+		}
+
+		if strings.HasPrefix(line, "QUESTION:") {
+			question = strings.TrimPrefix(line, "QUESTION:")
+		}
+	}
+
+	return Challenge{
+		Type:     msgType,
+		Question: question,
+	}
 }
 
 func main() {
