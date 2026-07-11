@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 )
 
@@ -12,8 +13,17 @@ func main() {
 	}
 
 	message := `TYPE:RIDDLE
-QUESTION:What has keys but can't open locks?
-END`
+QUESTION:What has hands but can't clap?
+END
+`
 
 	conn.Write([]byte(message))
+	buffer := make([]byte, 1024)
+
+	n, err := conn.Read(buffer)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(buffer[:n]))
 }

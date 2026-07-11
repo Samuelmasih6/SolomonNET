@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"strings"
@@ -14,20 +15,39 @@ type Challenge struct {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buffer := make([]byte, 1024)
+	reader := bufio.NewReader(conn)
 
-	n, err := conn.Read(buffer)
-	if err != nil {
-		return
+	var message strings.Builder
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return
+		}
+
+		// remove spaces/newlines
+		line = strings.TrimSpace(line)
+
+		if line == "END" {
+			challenge := parseChallenge(message.String())
+			answer := solveRiddle(challenge.Question)
+
+			fmt.Println("Type:", challenge.Type)
+			fmt.Println("Question:", challenge.Question)
+
+			response := fmt.Sprintf("TYPE:ANSWER\nANSWER:%s\nEND\n", answer)
+			_, err := conn.Write([]byte(response))
+			if err != nil {
+				return
+			}
+			message.Reset()
+
+			continue
+		}
+
+		message.WriteString(line)
+		message.WriteString("\n")
 	}
-
-	//fmt.Println("Received:", string(buffer[:n]))
-	message := string(buffer[:n])
-
-	challenge := parseChallenge(message)
-
-	fmt.Println("Type:", challenge.Type)
-	fmt.Println("Question:", challenge.Question)
 }
 
 func parseChallenge(message string) Challenge {
@@ -51,6 +71,19 @@ func parseChallenge(message string) Challenge {
 	return Challenge{
 		Type:     msgType,
 		Question: question,
+	}
+}
+
+func solveRiddle(question string) string {
+	switch question {
+	case "What has keys but can't open locks?":
+		return "A piano"
+
+	case "What has hands but can't clap?":
+		return "A clock"
+
+	default:
+		return "I do not know"
 	}
 }
 
