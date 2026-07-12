@@ -19,13 +19,19 @@ func main() {
 	reader := bufio.NewReader(conn)
 
 	for {
-		fmt.Print("Queen> ")
+		fmt.Print("Challenge Type (RIDDLE/CASE):")
+		challengetype, err := consolereader.ReadString('\n')
+		if err != nil {
+			return
+		}
 
+		fmt.Print("Question:")
 		question, err := consolereader.ReadString('\n')
 		if err != nil {
 			return
 		}
 
+		challengetype = strings.TrimSpace(challengetype)
 		question = strings.TrimSpace(question)
 
 		if question == "exit" {
@@ -33,7 +39,8 @@ func main() {
 		}
 
 		message := fmt.Sprintf(
-			"TYPE:RIDDLE\nQUESTION:%s\nEND\n",
+			"TYPE:%s\nQUESTION:%s\nEND\n",
+			challengetype,
 			question,
 		)
 		_, err = conn.Write([]byte(message))

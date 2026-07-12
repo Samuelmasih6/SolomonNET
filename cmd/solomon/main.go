@@ -22,26 +22,60 @@ func handleConnection(conn net.Conn, id int) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
+			fmt.Printf("[Queen %d] disconnected\n", id)
 			return
 		}
 
-		// remove spaces/newlines
 		line = strings.TrimSpace(line)
 
 		if line == "END" {
 			challenge := parseChallenge(message.String())
 
-			//fmt.Println("Type:", challenge.Type)
-			fmt.Printf("[Queen %d] Question: %s\n", id, challenge.Question)
+			fmt.Printf(
+				"[Queen %d] Type=%s Question=%s\n",
+				id,
+				challenge.Type,
+				challenge.Question,
+			)
 
-			answer := solveRiddle(challenge.Question)
-			response := fmt.Sprintf("TYPE:ANSWER\nANSWER:%s\nEND\n", answer)
-			_, err := conn.Write([]byte(response))
+			var answer string
+
+			switch challenge.Type {
+
+			case "RIDDLE":
+				answer = solveRiddle(challenge.Question)
+
+			case "CASE":
+				testimony, err := consultWitness(
+					challenge.Question,
+				)
+
+				if err != nil {
+					answer = "Witness unavailable"
+				} else {
+					answer = testimony
+				}
+
+			default:
+				answer = "Unknown challenge type"
+			}
+
+			response := fmt.Sprintf(
+				"TYPE:ANSWER\nANSWER:%s\nEND\n",
+				answer,
+			)
+
+			_, err = conn.Write([]byte(response))
 			if err != nil {
+				fmt.Printf(
+					"[Queen %d] failed to send response: %v\n",
+					id,
+					err,
+				)
 				return
 			}
-			message.Reset()
 
+			message.Reset()
 			continue
 		}
 
@@ -76,6 +110,7 @@ func parseChallenge(message string) Challenge {
 
 func solveRiddle(question string) string {
 	switch question {
+
 	case "What has keys but can't open locks?":
 		return "A piano"
 
@@ -87,8 +122,49 @@ func solveRiddle(question string) string {
 	}
 }
 
+func consultWitness(question string) (string, error) {
+	conn, err := net.Dial("tcp", "localhost:9090")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	message := fmt.Sprintf(
+		"TYPE:EVIDENCE\nQUESTION:%s\nEND\n",
+		question,
+	)
+
+	_, err = conn.Write([]byte(message))
+	if err != nil {
+		return "", err
+	}
+
+	reader := bufio.NewReader(conn)
+
+	var response strings.Builder
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+
+		line = strings.TrimSpace(line)
+
+		if line == "END" {
+			break
+		}
+
+		response.WriteString(line)
+		response.WriteString("\n")
+	}
+
+	return response.String(), nil
+}
+
 func main() {
 	var nextID int
+
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
@@ -101,8 +177,8 @@ func main() {
 		if err != nil {
 			continue
 		}
-		nextID++
 
+		nextID++
 		id := nextID
 
 		fmt.Printf("Queen %d connected\n", id)
