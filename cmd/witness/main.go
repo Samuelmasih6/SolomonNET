@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-type Challenge struct {
-	Type     string
-	Question string
-}
-
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
@@ -30,18 +25,17 @@ func handleConnection(conn net.Conn) {
 
 		if line == "END" {
 
-			fmt.Printf("%s\n", message.String())
+			fmt.Println("Evidence Request:")
+			fmt.Println(message.String())
 
-			response := `TYPE:TESTIMONY
-ANSWER:The merchant was near the vault.
-END
-`
+			response := "TYPE:TESTIMONY\nANSWER:The merchant was near the vault.\nEND\n"
+
 			_, err := conn.Write([]byte(response))
 			if err != nil {
 				return
 			}
-			message.Reset()
 
+			message.Reset()
 			continue
 		}
 

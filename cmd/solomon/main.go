@@ -12,6 +12,11 @@ type Challenge struct {
 	Question string
 }
 
+type Testimony struct {
+	Type   string
+	Answer string
+}
+
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
 
@@ -108,6 +113,30 @@ func parseChallenge(message string) Challenge {
 	}
 }
 
+func parseTestimony(message string) Testimony {
+	var msgType string
+	var answer string
+
+	lines := strings.Split(message, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "TYPE:") {
+			msgType = strings.TrimPrefix(line, "TYPE:")
+		}
+
+		if strings.HasPrefix(line, "ANSWER:") {
+			answer = strings.TrimPrefix(line, "ANSWER:")
+		}
+	}
+
+	return Testimony{
+		Type:   msgType,
+		Answer: answer,
+	}
+}
+
 func solveRiddle(question string) string {
 	switch question {
 
@@ -138,7 +167,6 @@ func consultWitness(question string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	reader := bufio.NewReader(conn)
 
 	var response strings.Builder
@@ -148,18 +176,16 @@ func consultWitness(question string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-
 		line = strings.TrimSpace(line)
 
 		if line == "END" {
-			break
+			testimony := parseTestimony(response.String())
+			return testimony.Answer, nil
 		}
 
 		response.WriteString(line)
 		response.WriteString("\n")
 	}
-
-	return response.String(), nil
 }
 
 func main() {
