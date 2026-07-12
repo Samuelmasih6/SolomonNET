@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 type Challenge struct {
@@ -152,10 +153,17 @@ func solveRiddle(question string) string {
 }
 
 func consultWitness(question string) (string, error) {
-	conn, err := net.Dial("tcp", "localhost:9090")
+	conn, err := net.DialTimeout(
+		"tcp",
+		"localhost:9090",
+		2*time.Second,
+	)
 	if err != nil {
 		return "", err
 	}
+	conn.SetDeadline(
+		time.Now().Add(2 * time.Second),
+	)
 	defer conn.Close()
 
 	message := fmt.Sprintf(
