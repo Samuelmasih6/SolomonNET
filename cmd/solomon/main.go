@@ -12,7 +12,7 @@ type Challenge struct {
 	Question string
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -31,8 +31,8 @@ func handleConnection(conn net.Conn) {
 		if line == "END" {
 			challenge := parseChallenge(message.String())
 
-			fmt.Println("Type:", challenge.Type)
-			fmt.Println("Question:", challenge.Question)
+			//fmt.Println("Type:", challenge.Type)
+			fmt.Printf("[Queen %d] Question: %s\n", id, challenge.Question)
 
 			answer := solveRiddle(challenge.Question)
 			response := fmt.Sprintf("TYPE:ANSWER\nANSWER:%s\nEND\n", answer)
@@ -88,7 +88,7 @@ func solveRiddle(question string) string {
 }
 
 func main() {
-
+	var nextID int
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
@@ -101,7 +101,12 @@ func main() {
 		if err != nil {
 			continue
 		}
+		nextID++
 
-		go handleConnection(conn)
+		id := nextID
+
+		fmt.Printf("Queen %d connected\n", id)
+
+		go handleConnection(conn, id)
 	}
 }

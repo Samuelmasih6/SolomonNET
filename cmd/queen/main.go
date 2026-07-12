@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -14,34 +15,51 @@ func main() {
 	}
 	defer conn.Close()
 
-	message := `TYPE:RIDDLE
-QUESTION:What has keys but can't open locks?
-END
-`
-
-	_, err = conn.Write([]byte(message))
-	if err != nil {
-		panic(err)
-	}
-
+	consolereader := bufio.NewReader(os.Stdin)
 	reader := bufio.NewReader(conn)
 
-	var response strings.Builder
-
 	for {
-		line, err := reader.ReadString('\n')
+		fmt.Print("Queen> ")
+
+		question, err := consolereader.ReadString('\n')
+		if err != nil {
+			return
+		}
+
+		question = strings.TrimSpace(question)
+
+		if question == "exit" {
+			return
+		}
+
+		message := fmt.Sprintf(
+			"TYPE:RIDDLE\nQUESTION:%s\nEND\n",
+			question,
+		)
+		_, err = conn.Write([]byte(message))
 		if err != nil {
 			panic(err)
 		}
 
-		line = strings.TrimSpace(line)
+		var response strings.Builder
 
-		if line == "END" {
-			fmt.Println(response.String())
-			break
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				panic(err)
+			}
+
+			line = strings.TrimSpace(line)
+
+			if line == "END" {
+				fmt.Println("\nSolomon:")
+				fmt.Println(response.String())
+				break
+			}
+
+			response.WriteString(line)
+			response.WriteString("\n")
 		}
-
-		response.WriteString(line)
-		response.WriteString("\n")
 	}
+
 }
