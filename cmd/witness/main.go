@@ -20,7 +20,6 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		// remove spaces/newlines
 		line = strings.TrimSpace(line)
 
 		if line == "END" {
