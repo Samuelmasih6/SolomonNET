@@ -18,6 +18,12 @@ type Testimony struct {
 	Answer string
 }
 
+type WitnessResult struct {
+	Address   string
+	Testimony string
+	Err       error
+}
+
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
 
@@ -52,15 +58,61 @@ func handleConnection(conn net.Conn, id int) {
 				answer = solveRiddle(challenge.Question)
 
 			case "CASE":
-				testimony, err := consultWitness(
-					challenge.Question,
-				)
-
-				if err != nil {
-					answer = "Witness unavailable"
-				} else {
-					answer = testimony
+				witnesses := []string{
+					"localhost:9091",
+					"localhost:9092",
+					"localhost:9093",
 				}
+				results := make(chan WitnessResult)
+
+				for _, address := range witnesses {
+
+					go func(addr string) {
+
+						testimony, err := consultWitness(
+							addr,
+							challenge.Question,
+						)
+
+						results <- WitnessResult{
+							Address:   addr,
+							Testimony: testimony,
+							Err:       err,
+						}
+
+					}(address)
+				}
+
+				var testimonies []string
+
+				for i := 0; i < len(witnesses); i++ {
+
+					result := <-results
+
+					if result.Err != nil {
+						testimonies = append(
+							testimonies,
+							fmt.Sprintf(
+								"%s -> unavailable",
+								result.Address,
+							),
+						)
+					} else {
+						testimonies = append(
+							testimonies,
+							fmt.Sprintf(
+								"%s -> %s",
+								result.Address,
+								result.Testimony,
+							),
+						)
+					}
+				}
+
+				answer = strings.Join(
+					testimonies,
+					"\n",
+				)
 
 			default:
 				answer = "Unknown challenge type"
@@ -152,10 +204,10 @@ func solveRiddle(question string) string {
 	}
 }
 
-func consultWitness(question string) (string, error) {
+func consultWitness(address, question string) (string, error) {
 	conn, err := net.DialTimeout(
 		"tcp",
-		"localhost:9090",
+		address,
 		2*time.Second,
 	)
 	if err != nil {

@@ -28,7 +28,7 @@ func handleConnection(conn net.Conn) {
 			fmt.Println("Evidence Request:")
 			fmt.Println(message.String())
 
-			response := "TYPE:TESTIMONY\nANSWER:The merchant was near the vault.\nEND\n"
+			response := "TYPE:TESTIMONY\nANSWER:The merchant was 3.\nEND\n"
 
 			_, err := conn.Write([]byte(response))
 			if err != nil {
@@ -45,7 +45,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":9090")
+	listener, err := net.Listen("tcp", ":9093")
 	if err != nil {
 		panic(err)
 	}
