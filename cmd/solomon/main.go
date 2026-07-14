@@ -5,24 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"time"
 )
-
-type Challenge struct {
-	Type     string
-	Question string
-}
-
-type Testimony struct {
-	Type   string
-	Answer string
-}
-
-type WitnessResult struct {
-	Address   string
-	Testimony string
-	Err       error
-}
 
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
@@ -64,7 +47,7 @@ func handleConnection(conn net.Conn, id int) {
 					"localhost:9093",
 				}
 				results := make(chan WitnessResult)
-
+				votes := make(map[string]int)
 				for _, address := range witnesses {
 
 					go func(addr string) {
@@ -75,15 +58,16 @@ func handleConnection(conn net.Conn, id int) {
 						)
 
 						results <- WitnessResult{
-							Address:   addr,
-							Testimony: testimony,
-							Err:       err,
+							Address: addr,
+							Suspect: testimony,
+							Err:     err,
 						}
 
 					}(address)
 				}
 
 				var testimonies []string
+				availableWitnesses := 0
 
 				for i := 0; i < len(witnesses); i++ {
 
@@ -98,20 +82,41 @@ func handleConnection(conn net.Conn, id int) {
 							),
 						)
 					} else {
+						availableWitnesses++
 						testimonies = append(
 							testimonies,
 							fmt.Sprintf(
 								"%s -> %s",
 								result.Address,
-								result.Testimony,
+								result.Suspect,
 							),
 						)
+						votes[result.Suspect]++
 					}
 				}
 
-				answer = strings.Join(
-					testimonies,
-					"\n",
+				var winner string
+				var maxVotes int
+
+				for suspect, count := range votes {
+
+					if count > maxVotes {
+						maxVotes = count
+						winner = suspect
+					}
+				}
+				confidence := fmt.Sprintf(
+					"%d/%d",
+					maxVotes,
+					availableWitnesses,
+				)
+				if maxVotes <= availableWitnesses/2 {
+					winner = "INCONCLUSIVE"
+				}
+				answer = fmt.Sprintf(
+					"VERDICT:%s\nCONFIDENCE:%s",
+					winner,
+					confidence,
 				)
 
 			default:
@@ -142,54 +147,6 @@ func handleConnection(conn net.Conn, id int) {
 	}
 }
 
-func parseChallenge(message string) Challenge {
-	var msgType string
-	var question string
-
-	lines := strings.Split(message, "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-
-		if strings.HasPrefix(line, "TYPE:") {
-			msgType = strings.TrimPrefix(line, "TYPE:")
-		}
-
-		if strings.HasPrefix(line, "QUESTION:") {
-			question = strings.TrimPrefix(line, "QUESTION:")
-		}
-	}
-
-	return Challenge{
-		Type:     msgType,
-		Question: question,
-	}
-}
-
-func parseTestimony(message string) Testimony {
-	var msgType string
-	var answer string
-
-	lines := strings.Split(message, "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-
-		if strings.HasPrefix(line, "TYPE:") {
-			msgType = strings.TrimPrefix(line, "TYPE:")
-		}
-
-		if strings.HasPrefix(line, "ANSWER:") {
-			answer = strings.TrimPrefix(line, "ANSWER:")
-		}
-	}
-
-	return Testimony{
-		Type:   msgType,
-		Answer: answer,
-	}
-}
-
 func solveRiddle(question string) string {
 	switch question {
 
@@ -201,50 +158,6 @@ func solveRiddle(question string) string {
 
 	default:
 		return "I do not know"
-	}
-}
-
-func consultWitness(address, question string) (string, error) {
-	conn, err := net.DialTimeout(
-		"tcp",
-		address,
-		2*time.Second,
-	)
-	if err != nil {
-		return "", err
-	}
-	conn.SetDeadline(
-		time.Now().Add(2 * time.Second),
-	)
-	defer conn.Close()
-
-	message := fmt.Sprintf(
-		"TYPE:EVIDENCE\nQUESTION:%s\nEND\n",
-		question,
-	)
-
-	_, err = conn.Write([]byte(message))
-	if err != nil {
-		return "", err
-	}
-	reader := bufio.NewReader(conn)
-
-	var response strings.Builder
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-		line = strings.TrimSpace(line)
-
-		if line == "END" {
-			testimony := parseTestimony(response.String())
-			return testimony.Answer, nil
-		}
-
-		response.WriteString(line)
-		response.WriteString("\n")
 	}
 }
 
