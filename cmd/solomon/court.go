@@ -52,3 +52,16 @@ func (c *Court) GetCase(id int) (Case, bool) {
 	cse, ok := c.cases[id]
 	return cse, ok
 }
+
+func (c *Court) ListCases() []Case {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	cases := make([]Case, 0, len(c.cases))
+
+	for _, cse := range c.cases {
+		cases = append(cases, cse)
+	}
+
+	return cases
+}

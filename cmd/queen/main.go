@@ -20,51 +20,64 @@ func main() {
 	reader := bufio.NewReader(conn)
 
 	for {
-		fmt.Print("Challenge Type (RIDDLE/CASE/LOOKUP):")
+		var message string
+		fmt.Print(
+			"Challenge Type (RIDDLE/CASE/LOOKUP/HISTORY): ",
+		)
 		challengetype, err := consolereader.ReadString('\n')
 		if err != nil {
 			return
 		}
 		challengetype = strings.TrimSpace(challengetype)
+		challengetype =
+			strings.ToUpper(
+				strings.TrimSpace(challengetype),
+			)
+		if challengetype == "EXIT" {
+			return
+		}
+		if challengetype == "HISTORY" {
 
-		if challengetype == "LOOKUP" {
-			fmt.Print("CASE ID:")
+			message = "TYPE:HISTORY\nEND\n"
+
 		} else {
-			fmt.Print("Question:")
-		}
-		question, err := consolereader.ReadString('\n')
-		if err != nil {
-			return
-		}
-
-		question = strings.TrimSpace(question)
-
-		if question == "exit" {
-			return
-		}
-
-		var message string
-
-		if challengetype == "LOOKUP" {
-
-			id, err := strconv.Atoi(question)
+			if challengetype == "LOOKUP" {
+				fmt.Print("CASE ID:")
+			} else {
+				fmt.Print("Question:")
+			}
+			question, err := consolereader.ReadString('\n')
 			if err != nil {
-				fmt.Println("Invalid case ID")
-				continue
+				return
 			}
 
-			message = fmt.Sprintf(
-				"TYPE:LOOKUP\nCASE_ID:%d\nEND\n",
-				id,
-			)
+			question = strings.TrimSpace(question)
 
-		} else {
+			if question == "exit" {
+				return
+			}
 
-			message = fmt.Sprintf(
-				"TYPE:%s\nQUESTION:%s\nEND\n",
-				challengetype,
-				question,
-			)
+			if challengetype == "LOOKUP" {
+
+				id, err := strconv.Atoi(question)
+				if err != nil {
+					fmt.Println("Invalid case ID")
+					continue
+				}
+
+				message = fmt.Sprintf(
+					"TYPE:LOOKUP\nCASE_ID:%d\nEND\n",
+					id,
+				)
+
+			} else {
+
+				message = fmt.Sprintf(
+					"TYPE:%s\nQUESTION:%s\nEND\n",
+					challengetype,
+					question,
+				)
+			}
 		}
 		_, err = conn.Write([]byte(message))
 		if err != nil {

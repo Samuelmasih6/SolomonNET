@@ -155,6 +155,30 @@ func handleConnection(conn net.Conn, id int) {
 						cse.Confidence,
 					)
 				}
+
+			case "HISTORY":
+				allCases := court.ListCases()
+				var history strings.Builder
+
+				if len(allCases) == 0 {
+					answer = "NO_CASES_FOUND"
+					break
+				}
+				for _, cse := range allCases {
+
+					history.WriteString(
+						fmt.Sprintf(
+							"CASE_ID:%d QUESTION:%s VERDICT:%s CONFIDENCE:%s\n",
+							cse.ID,
+							cse.Question,
+							cse.Verdict,
+							cse.Confidence,
+						),
+					)
+				}
+
+				answer = history.String()
+
 			default:
 				answer = "Unknown challenge type"
 			}
