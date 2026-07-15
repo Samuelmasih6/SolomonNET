@@ -7,6 +7,52 @@ import (
 	"strings"
 )
 
+type Challenge struct {
+	Type     string
+	Question string
+}
+
+var evidenceDB = map[string]string{
+	"Who stole the treasure?": "MERCHANT",
+	"Who stole the crown?":    "GUARD",
+	"Who burned the barn?":    "FARMER",
+}
+
+func findSuspect(question string) string {
+
+	suspect, ok := evidenceDB[question]
+
+	if !ok {
+		return "UNKNOWN"
+	}
+
+	return suspect
+}
+
+func parseChallenge(message string) Challenge {
+	var msgType string
+	var question string
+
+	lines := strings.Split(message, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "TYPE:") {
+			msgType = strings.TrimPrefix(line, "TYPE:")
+		}
+
+		if strings.HasPrefix(line, "QUESTION:") {
+			question = strings.TrimPrefix(line, "QUESTION:")
+		}
+	}
+
+	return Challenge{
+		Type:     msgType,
+		Question: question,
+	}
+}
+
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
@@ -24,16 +70,21 @@ func handleConnection(conn net.Conn) {
 
 		if line == "END" {
 
-			fmt.Println("Evidence Request:")
-			fmt.Println(message.String())
+			challenge := parseChallenge(message.String())
 
-			response := "TYPE:TESTIMONY\nANSWER:MERCHANT\nEND\n"
-			_, err := conn.Write([]byte(response))
-			if err != nil {
-				return
-			}
+			suspect := findSuspect(
+				challenge.Question,
+			)
+
+			response := fmt.Sprintf(
+				"TYPE:TESTIMONY\nANSWER:%s\nEND\n",
+				suspect,
+			)
+
+			conn.Write([]byte(response))
 
 			message.Reset()
+
 			continue
 		}
 
@@ -43,7 +94,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":9092")
+	listener, err := net.Listen("tcp", ":9093")
 	if err != nil {
 		panic(err)
 	}

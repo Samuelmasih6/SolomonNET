@@ -8,6 +8,11 @@ import (
 )
 
 var court = NewCourt()
+var witnesses = []string{
+	"localhost:9091",
+	"localhost:9092",
+	"localhost:9093",
+}
 
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
@@ -43,11 +48,6 @@ func handleConnection(conn net.Conn, id int) {
 				answer = solveRiddle(challenge.Question)
 
 			case "CASE":
-				witnesses := []string{
-					"localhost:9091",
-					"localhost:9092",
-					"localhost:9093",
-				}
 				results := make(chan WitnessResult)
 				for _, address := range witnesses {
 
@@ -137,7 +137,7 @@ func handleConnection(conn net.Conn, id int) {
 			}
 
 			response := fmt.Sprintf(
-				"TYPE:ANSWER\nANSWER:%s\nEND\n",
+				"TYPE:ANSWER\n%s\nEND\n",
 				answer,
 			)
 
