@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+var court = NewCourt()
+
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
 
@@ -47,7 +49,6 @@ func handleConnection(conn net.Conn, id int) {
 					"localhost:9093",
 				}
 				results := make(chan WitnessResult)
-				votes := make(map[string]int)
 				for _, address := range witnesses {
 
 					go func(addr string) {
@@ -67,6 +68,7 @@ func handleConnection(conn net.Conn, id int) {
 				}
 
 				var testimonies []string
+				votes := make(map[string]int)
 				availableWitnesses := 0
 
 				for i := 0; i < len(witnesses); i++ {
@@ -110,11 +112,22 @@ func handleConnection(conn net.Conn, id int) {
 					maxVotes,
 					availableWitnesses,
 				)
+				if availableWitnesses == 0 {
+					winner = "UNKNOWN"
+					confidence = "0/0"
+				}
 				if maxVotes <= availableWitnesses/2 {
 					winner = "INCONCLUSIVE"
 				}
+				savedCase := court.CreateCase(
+					challenge.Question,
+					testimonies,
+					winner,
+					confidence,
+				)
 				answer = fmt.Sprintf(
-					"VERDICT:%s\nCONFIDENCE:%s",
+					"CASE_ID:%d\nVERDICT:%s\nCONFIDENCE:%s",
+					savedCase.ID,
 					winner,
 					confidence,
 				)

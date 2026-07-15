@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Challenge struct {
 	Type     string
 	Question string
@@ -17,8 +19,10 @@ type WitnessResult struct {
 }
 
 type Case struct {
-	ID         int
-	Question   string
-	Verdict    string
-	Confidence string
+	ID          int
+	Question    string
+	Testimonies []string
+	Verdict     string
+	Confidence  string
+	CreatedAt   time.Time
 }
