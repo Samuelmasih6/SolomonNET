@@ -132,6 +132,29 @@ func handleConnection(conn net.Conn, id int) {
 					confidence,
 				)
 
+			case "LOOKUP":
+
+				cse, ok := court.GetCase(
+					challenge.CaseID,
+				)
+
+				if !ok {
+
+					answer = fmt.Sprintf(
+						"CASE_ID:%d\nSTATUS:NOT_FOUND",
+						challenge.CaseID,
+					)
+
+				} else {
+
+					answer = fmt.Sprintf(
+						"CASE_ID:%d\nQUESTION:%s\nVERDICT:%s\nCONFIDENCE:%s",
+						cse.ID,
+						cse.Question,
+						cse.Verdict,
+						cse.Confidence,
+					)
+				}
 			default:
 				answer = "Unknown challenge type"
 			}

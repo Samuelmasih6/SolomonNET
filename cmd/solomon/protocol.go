@@ -1,10 +1,14 @@
 package main
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 func parseChallenge(message string) Challenge {
 	var msgType string
 	var question string
+	var caseID int
 
 	lines := strings.Split(message, "\n")
 
@@ -18,11 +22,23 @@ func parseChallenge(message string) Challenge {
 		if strings.HasPrefix(line, "QUESTION:") {
 			question = strings.TrimPrefix(line, "QUESTION:")
 		}
+
+		if strings.HasPrefix(line, "CASE_ID:") {
+			idStr := strings.TrimPrefix(
+				line,
+				"CASE_ID:",
+			)
+			id, err := strconv.Atoi(idStr)
+			if err == nil {
+				caseID = id
+			}
+		}
 	}
 
 	return Challenge{
 		Type:     msgType,
 		Question: question,
+		CaseID:   caseID,
 	}
 }
 

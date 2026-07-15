@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -19,30 +20,52 @@ func main() {
 	reader := bufio.NewReader(conn)
 
 	for {
-		fmt.Print("Challenge Type (RIDDLE/CASE):")
+		fmt.Print("Challenge Type (RIDDLE/CASE/LOOKUP):")
 		challengetype, err := consolereader.ReadString('\n')
 		if err != nil {
 			return
 		}
+		challengetype = strings.TrimSpace(challengetype)
 
-		fmt.Print("Question:")
+		if challengetype == "LOOKUP" {
+			fmt.Print("CASE ID:")
+		} else {
+			fmt.Print("Question:")
+		}
 		question, err := consolereader.ReadString('\n')
 		if err != nil {
 			return
 		}
 
-		challengetype = strings.TrimSpace(challengetype)
 		question = strings.TrimSpace(question)
 
 		if question == "exit" {
 			return
 		}
 
-		message := fmt.Sprintf(
-			"TYPE:%s\nQUESTION:%s\nEND\n",
-			challengetype,
-			question,
-		)
+		var message string
+
+		if challengetype == "LOOKUP" {
+
+			id, err := strconv.Atoi(question)
+			if err != nil {
+				fmt.Println("Invalid case ID")
+				continue
+			}
+
+			message = fmt.Sprintf(
+				"TYPE:LOOKUP\nCASE_ID:%d\nEND\n",
+				id,
+			)
+
+		} else {
+
+			message = fmt.Sprintf(
+				"TYPE:%s\nQUESTION:%s\nEND\n",
+				challengetype,
+				question,
+			)
+		}
 		_, err = conn.Write([]byte(message))
 		if err != nil {
 			panic(err)

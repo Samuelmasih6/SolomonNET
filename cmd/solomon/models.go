@@ -5,6 +5,7 @@ import "time"
 type Challenge struct {
 	Type     string
 	Question string
+	CaseID   int
 }
 
 type Testimony struct {
