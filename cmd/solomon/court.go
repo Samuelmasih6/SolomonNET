@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"sync"
 	"time"
 )
@@ -62,6 +63,13 @@ func (c *Court) ListCases() []Case {
 	for _, cse := range c.cases {
 		cases = append(cases, cse)
 	}
+
+	sort.Slice(
+		cases,
+		func(i, j int) bool {
+			return cases[i].ID < cases[j].ID
+		},
+	)
 
 	return cases
 }
