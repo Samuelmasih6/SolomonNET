@@ -33,12 +33,20 @@ func handleConnection(conn net.Conn, id int) {
 		if line == "END" {
 			challenge := parseChallenge(message.String())
 
-			fmt.Printf(
-				"[Queen %d] Type=%s Question=%s\n",
-				id,
-				challenge.Type,
-				challenge.Question,
-			)
+			if challenge.Type == "HISTORY" {
+				fmt.Printf(
+					"[Queen %d] Type=%s\n",
+					id,
+					challenge.Type,
+				)
+			} else {
+				fmt.Printf(
+					"[Queen %d] Type=%s Question=%s\n",
+					id,
+					challenge.Type,
+					challenge.Question,
+				)
+			}
 
 			var answer string
 
