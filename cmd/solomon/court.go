@@ -1,21 +1,12 @@
 package main
 
-import (
-	"sort"
-	"sync"
-	"time"
-)
-
 type Court struct {
-	mu     sync.RWMutex
-	nextID int
-	cases  map[int]Case
+	repo CaseRepository
 }
 
-func NewCourt() *Court {
+func NewCourt(repo CaseRepository) *Court {
 	return &Court{
-		nextID: 1,
-		cases:  make(map[int]Case),
+		repo: repo,
 	}
 }
 
@@ -25,51 +16,18 @@ func (c *Court) CreateCase(
 	verdict string,
 	confidence string,
 ) Case {
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	id := c.nextID
-	c.nextID++
-
-	newCase := Case{
-		ID:          id,
-		Question:    question,
-		Testimonies: testimonies,
-		Verdict:     verdict,
-		Confidence:  confidence,
-		CreatedAt:   time.Now(),
-	}
-
-	c.cases[id] = newCase
-
-	return newCase
+	return c.repo.Create(
+		question,
+		testimonies,
+		verdict,
+		confidence,
+	)
 }
 
 func (c *Court) GetCase(id int) (Case, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	cse, ok := c.cases[id]
-	return cse, ok
+	return c.repo.Get(id)
 }
 
 func (c *Court) ListCases() []Case {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	cases := make([]Case, 0, len(c.cases))
-
-	for _, cse := range c.cases {
-		cases = append(cases, cse)
-	}
-
-	sort.Slice(
-		cases,
-		func(i, j int) bool {
-			return cases[i].ID < cases[j].ID
-		},
-	)
-
-	return cases
+	return c.repo.List()
 }
