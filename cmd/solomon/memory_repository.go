@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"sync"
 	"time"
 )
@@ -43,4 +44,32 @@ func (r *MemoryRepository) Create(
 	r.cases[id] = newCase
 
 	return newCase
+}
+
+func (r *MemoryRepository) Get(id int) (Case, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	cse, ok := r.cases[id]
+	return cse, ok
+}
+
+func (r *MemoryRepository) List() []Case {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	cases := make([]Case, 0, len(r.cases))
+
+	for _, cse := range r.cases {
+		cases = append(cases, cse)
+	}
+
+	sort.Slice(
+		cases,
+		func(i, j int) bool {
+			return cases[i].ID < cases[j].ID
+		},
+	)
+
+	return cases
 }
