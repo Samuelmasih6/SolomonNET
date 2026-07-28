@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-var court = NewCourt()
 var witnesses = []string{
 	"localhost:9091",
 	"localhost:9092",
@@ -16,7 +15,7 @@ var witnesses = []string{
 
 func handleConnection(conn net.Conn, id int) {
 	defer conn.Close()
-
+	var court *Court
 	reader := bufio.NewReader(conn)
 
 	var message strings.Builder
@@ -231,7 +230,9 @@ func solveRiddle(question string) string {
 
 func main() {
 	var nextID int
-
+	repo := NewMemoryRepository()
+	court := NewCourt(repo)
+	_ = court
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
