@@ -13,9 +13,8 @@ var witnesses = []string{
 	"localhost:9093",
 }
 
-func handleConnection(conn net.Conn, id int) {
+func handleConnection(conn net.Conn, id int, court *Court) {
 	defer conn.Close()
-	var court *Court
 	reader := bufio.NewReader(conn)
 
 	var message strings.Builder
@@ -232,7 +231,6 @@ func main() {
 	var nextID int
 	repo := NewMemoryRepository()
 	court := NewCourt(repo)
-	_ = court
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
@@ -251,6 +249,16 @@ func main() {
 
 		fmt.Printf("Queen %d connected\n", id)
 
-		go handleConnection(conn, id)
+		go handleConnection(conn, id, court)
 	}
 }
+
+//main
+// ├── repo
+// ├── court
+// └── handleConnection(conn, id, court)
+//                        │
+//                        ▼
+//                  court.CreateCase()
+//                        ▼
+//                  MemoryRepository
