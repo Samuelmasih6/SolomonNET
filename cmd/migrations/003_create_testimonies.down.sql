@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS witnesses;
+DROP TABLE IF EXISTS testimonies;
