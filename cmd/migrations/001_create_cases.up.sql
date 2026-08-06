@@ -7,7 +7,9 @@ CREATE TABLE cases (
 
     verdict VARCHAR(100),
 
-    confidence NUMERIC(5,2),
+    votes_received INTEGER NOT NULL DEFAULT 0,
+
+    votes_total INTEGER NOT NULL DEFAULT 0,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
