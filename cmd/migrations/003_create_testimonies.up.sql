@@ -20,3 +20,9 @@ CREATE TABLE testimonies (
     FOREIGN KEY (witness_id)
         REFERENCES witnesses(id)
 );
+
+CREATE INDEX idx_testimonies_case_id
+ON testimonies(case_id);
+
+CREATE INDEX idx_testimonies_witness_id
+ON testimonies(witness_id);
